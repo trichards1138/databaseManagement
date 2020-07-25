@@ -1,28 +1,35 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-DVD keeper: Is an app to organize your DVD's and CD's and keep track of them
-in case you are looking to buy a new DVD and don't remember if you already
-have it either stand-alone or contained within a movie or music collection.
+Database keeper: Is an app to organize your DVD's and CD's (or any other hobby
+set) and keep track of them in case you are looking to buy a new DVD and don't 
+remember if you already have it (or a tool or cloth swatch :) etc) either stand-alone 
+or contained within a movie or music collection.
 
-File Support includes finding the directory and filename of the selected 
-database and creating a new db if the user desires.
+This is a toplevel popup dialog that displays and gets new information for a row in
+the Listbox.  The database is updated with the new row information as well.
+
+Copyright 2020 by Perfection Quest Software
 """
 from tkinter import *
 import sqliteSupport as sqll
 import MaindbSupport as ms
 
+# Add a row into the Listbox and the database the user is
+# currently working in.
 def add_row(gdbFont, dbListBox, stat2, sql, IsSelection):
-
-     
+    # Initial parameters for the window
     dbadd = Toplevel()
     dbadd.wm_title("Add New Data Base Entry")
     dbadd.geometry("700x400") 
     dbadd.config(bd=4, relief=RAISED)
 
+    # some globals to the popup
     value = []  #make this a global so we can send it to update
     myschema = sql.schema
        
+    # Schema1 - schema7 display the descriptor information for the row
+    # and allow editing of the info
     schema1l=StringVar()
     schema1Label=Label(dbadd,textvariable=schema1l)
     schema1Label.place(x = 20, y = 20, height=30)
@@ -111,6 +118,9 @@ def add_row(gdbFont, dbListBox, stat2, sql, IsSelection):
     dvde8.place(x = 300, y = 300, width=370, height=30)
     dvde8.configure(font=gdbFont)
 
+    # IsSelection indicates this call is a result of a 
+    # double click on a Listbox entry.   So enter the 
+    # existing data into the entries
     if IsSelection:
         #put the original descriptor values in the global
         value=dbListBox.get(dbListBox.curselection())
@@ -123,6 +133,8 @@ def add_row(gdbFont, dbListBox, stat2, sql, IsSelection):
         descriptor7.set(value[6])
         descriptor8.set(value[7])
 
+    # We've got the new information. Update the database entry
+    # or add it to the Listbox
     def calltodb(routinenum):
         descList = []
         descList.append(descriptor1.get())
@@ -141,13 +153,17 @@ def add_row(gdbFont, dbListBox, stat2, sql, IsSelection):
             sql.updaterow(desctuple, value)
         return
 
+    # If we are adding a new entry, call the calltodb function with 1
+    # to tell it to add it to the Listbox
     b1=Button(dbadd, text="Add Entry", command = lambda : calltodb(1))
     b1.place(x = 370, y = 340, width=100, height=30)   
 
+    # If it is an update, we only need to update the existing database entry
     if IsSelection:   
         b3=Button(dbadd, text="Update Entry", command = lambda : calltodb(2))
         b3.place(x = 470, y = 340, width=100, height=30) 
     
+    # Once done, destroy the window
     b4=Button(dbadd, text="Exit", command=dbadd.destroy)
     b4.place(x = 590, y = 340, width=80, height=30) 
     

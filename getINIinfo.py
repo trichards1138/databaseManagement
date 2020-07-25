@@ -1,36 +1,51 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-DVD keeper: Is an app to organize your DVD's and CD's and keep track of them
-in case you are looking to buy a new DVD and don't remember if you already
-have it either stand-alone or contained within a movie or music collection.
+Database keeper: Is an app to organize your DVD's and CD's (or any other hobby
+set) and keep track of them in case you are looking to buy a new DVD and don't 
+remember if you already have it (or a tool or cloth swatch :) etc) either stand-alone 
+or contained within a movie or music collection.
 
-File Support includes finding the directory and filename of the selected 
-database and creating a new db if the user desires.
+getINIinfo - A popup window to get information for a new INI section or a new database
+table (table name and schema - as well as path and filename)
+
+Copyright 2020 by Perfection Quest Software
 """
 from tkinter import *
 from tkinter.font import Font
 import ntpath
 
+# Define a new set of information that can update the INI file or be added
+# to a selected file.  Selecting either "Add Section to INI" or "Create New Table"
+# will open this window.  The user enters the Name (INI only), table name, path and 
+# filename (INI only), and the schema that matches the table.
+# 
+# Note: the table name and schema must match the table and schema in the file or
+#       database operations will be impossible
 def inisectioninfo(fs, sql, menuadd, AddingINI):
+    #set some initial values in a list
     iniList = []
     iniList.append("Place Keeper")
     iniList.append(sql.table)
     iniList.append(ntpath.dirname(sql.sqldbfname))
     iniList.append(ntpath.basename(sql.sqldbfname))
     iniList.append(sql.schema)
+    # even though number of sections (numsec) is not used for the INI file
+    # it is used for other bookkeeping
     iniList.append(fs.numsec)
 
+    #initialize the popup window
     isi = Toplevel()
     if AddingINI:
-        isi.wm_title("Get INI Section Info")
+        isi.wm_title("Get INI Section Info")    # if called from "INI_Tables"
     else:
-        isi.wm_title("Create New DB Table")
+        isi.wm_title("Create New DB Table")     # if called from "File_Tables"
     isi.geometry("560x450") 
     isi.config(bd=5, relief=RAISED)
 
     iniFont = Font(family="verdana", size=11, weight="bold")
 
+    # Entry used in the INI only.  This entry is diplayed in the INI_Tables menu
     iniName = Label(isi,text="INI Name for Database:")
     iniName.configure(font=iniFont)
     iniName.place(x = 20, y = 20, height=30)
@@ -40,9 +55,11 @@ def inisectioninfo(fs, sql, menuadd, AddingINI):
     iniNameE=Entry(isi,textvariable=iniNameS)
     iniNameE.place(x = 280, y = 20, width=250, height=30)
     iniNameE.configure(font=iniFont)
-    if not AddingINI:
+    if not AddingINI:   # Entry not used in File_Tables menu
         iniNameE.configure(state='disabled')
 
+    # The database Table name that names the database in the file
+    # Used in both INI and File Tables
     iniTable = Label(isi,text="DataBase Table:")
     iniTable.configure(font=iniFont)
     iniTable.place(x = 20, y = 50, height=30)
@@ -53,6 +70,8 @@ def inisectioninfo(fs, sql, menuadd, AddingINI):
     iniTableE.place(x = 280, y = 50, width=250, height=30)
     iniTableE.configure(font=iniFont)
 
+    # The Path and File name is an entry in the INI.  It is used to 
+    # open the appropriate file for the database Table selected
     iniPath = Label(isi,text="DataBase File Path:")
     iniPath.configure(font=iniFont)
     iniPath.place(x = 20, y = 80, height=30)
@@ -62,8 +81,8 @@ def inisectioninfo(fs, sql, menuadd, AddingINI):
     iniPathE=Entry(isi,textvariable=iniPathS)
     iniPathE.place(x = 280, y = 80, width=250, height=30)
     iniPathE.configure(font=iniFont)
-    if not AddingINI:
-        iniPathE.configure(state='disabled')
+    if not AddingINI:   # If the user opened a file, all of the tables are 
+        iniPathE.configure(state='disabled')    # in the same file
 
     iniFname = Label(isi,text="DataBase File Name:")
     iniFname.configure(font=iniFont)
@@ -77,6 +96,9 @@ def inisectioninfo(fs, sql, menuadd, AddingINI):
     if not AddingINI:
         iniFnameE.configure(state='disabled')
 
+    # The next eight entries define the database schema
+    # The schema entered must match the schema in the 
+    # database Table above if it exists already
     iniSchema1 = Label(isi,text="DataBase Schema1 (Value1):")
     iniSchema1.configure(font=iniFont)
     iniSchema1.place(x = 20, y = 150, height=30)
@@ -157,7 +179,9 @@ def inisectioninfo(fs, sql, menuadd, AddingINI):
     iniSchema8E.place(x = 280, y = 360, width=250, height=30)
     iniSchema8E.configure(font=iniFont)
 
-    def iniPrepare():
+    # routine to prepare all of the data entered by the user
+    # and then insert it into the appropriate places
+    def iniPrepare():   
         templist = []
         iniList[0] = iniNameS.get()
         iniList[1] = iniTableS.get()
@@ -172,27 +196,28 @@ def inisectioninfo(fs, sql, menuadd, AddingINI):
         templist.append(iniSchema7S.get()) 
         templist.append(iniSchema8S.get()) 
         iniList[4] = tuple(templist)
-        if AddingINI:
-            if fs.addsec2ini(iniList):
+        if AddingINI:   # If adding to the db.ini file
+            if fs.addsec2ini(iniList):  
+                #if successful adding the section, add it to the menu
                 menuadd(sql,fs,iniList)
-            isi.destroy()
-        else:
-            sql.table = iniList[1]
-            sql.schema = iniList[4]
-            sql.dbcreatetable()
-            sql.dbtablelist()
-            sql.getschema()
-            menuadd(sql,fs, False)
-            isi.destroy()
+            isi.destroy()   # destroy the window and return
+        else:   # If adding a table to the file "Table list"
+            sql.table = iniList[1]  # We need the Table name
+            sql.schema = iniList[4] # and matching schema
+            sql.dbcreatetable()     # create the table in the file if not there already
+            sql.dbtablelist()       # This adds the new name to the table list
+            sql.getschema()         # Adds the schema to the master schema list
+            menuadd(sql,fs, False)  # Adds table name to the menu
+            isi.destroy()           # Destroy the window and return
         return
         
         
 
-    if AddingINI:
+    if AddingINI:   # Button named appropriately for INI section add
         b1=Button(isi, text='Add to INI', command=iniPrepare) 
         b1.place(x = 410, y = 400, width=120, height=30)
         b1.configure(bd=2, relief=RAISED)
-    else:
+    else:           # Likewise for database table addition
         b1=Button(isi, text='Create Initial Table', command=iniPrepare) 
         b1.place(x = 370, y = 400, width=160, height=30)
         b1.configure(bd=2, relief=RAISED)        

@@ -1,25 +1,30 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-DVD keeper: Is an app to organize your DVD's and CD's and keep track of them
-in case you are looking to buy a new DVD and don't remember if you already
-have it either stand-alone or contained within a movie or music collection.
+Database keeper: Is an app to organize your DVD's and CD's (or any other hobby
+set) and keep track of them in case you are looking to buy a new DVD and don't 
+remember if you already have it (or a tool or cloth swatch :) etc) either stand-alone 
+or contained within a movie or music collection.
 
 Sqlite support interfaces with the database after it is opened.  Record 
 retrieval and addition is supported here.
+
+Copyright 2020 by Perfection Quest Software
 """
 import sqlite3
 
-class dbsupport:
+class dbsupport:    #database support class
 
+    # some class global attributes
     table = "dvd"
     schema = ("Title", "Lead_Star", "Release_Year", "Genre", "Collection", "Location", "Rating", "Misc")
     sqldbfname = ""
     conn = None
 
-    def __init__(self):
+    def __init__(self):    
         return
 
+    # Connect to a new database file.  Should call close first
     def dbconnect(self, fname): 
         self.sqldbfname = fname
         try:
@@ -29,6 +34,7 @@ class dbsupport:
         self.cur=self.conn.cursor()
         return True
    
+    # Create an database table with schema (a descriptor values) if it doesn't exist
     def dbcreatetable(self):
         try:
             self.cur.execute(f"CREATE TABLE IF NOT EXISTS {self.table} ({self.schema[0]},{self.schema[1]},{self.schema[2]}, \
@@ -38,6 +44,7 @@ class dbsupport:
             return False
         return True
 
+    # Get the schema of the table just opened (used when opening a new file)
     def getschema(self):
         schemalist = []
         self.cur.execute(f"SELECT name FROM PRAGMA_TABLE_INFO('{self.table}')")
@@ -48,6 +55,7 @@ class dbsupport:
         self.schema = tuple(schemalist)
         return self.schema
 
+    # Get a list of database tables in the file just opened to display in the menu
     def dbtablelist(self):
         self.tablelist = []
         self.cur.execute("SELECT name FROM \
@@ -65,7 +73,7 @@ class dbsupport:
         self.conn.commit()
         return
 
-    #Select a db table and search for the row entry(s) that match the 4 provided search parameters (value)
+    #Select a db table and search for the row entry(s) that match the 4 provided search parameters (descriptor values)
     def searchrows(self, value, rowcont):
         self.cur.execute(f"SELECT * FROM {self.table} WHERE {value[0]}=? OR {value[1]}=? OR {value[2]}=? OR {value[3]}=?",
                  rowcont)
@@ -80,7 +88,7 @@ class dbsupport:
         self.conn.commit()
         return
 
-    # update the db row in the db table that matches
+    # update the db row in the db table that matches (new_rowcont or new row content is the new data for the row)
     def updaterow(self, new_rowcont, rowcont):
         self.cur.execute(f"UPDATE {self.table} SET {self.schema[0]}=?, {self.schema[1]}=?, {self.schema[2]}=?, {self.schema[3]}=?, \
             {self.schema[4]}=?, {self.schema[5]}=?, {self.schema[6]}=?, {self.schema[7]}=? WHERE {self.schema[0]}=? AND {self.schema[1]}=?  \
@@ -102,10 +110,13 @@ class dbsupport:
         self.conn.commit()
         return
 
+    # close the connection (use if you are opening a new file)
     def close_conn(self):
         if self.conn:
             self.conn.close()
+        return
 
+    # We are done...destroy the class.  This is done automatically so this is not called.
     def __del__(self):
         del self
         return
